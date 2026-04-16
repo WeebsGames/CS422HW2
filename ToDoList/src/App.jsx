@@ -1,13 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function App() {
   // State: list of todos
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState(() => {
+    //load todos from localStorage
+    try{
+      const stored = localStorage.getItem("todos");
+      if(stored != null){
+        return JSON.parse(stored);
+      } 
+      return [];
+    } catch{
+      return [];
+    }
+  });
 
   // State: text inside input box
   const [draft, setDraft] = useState("");
 
   const [filter, setFilter] = useState("all"); // 'all' | 'active' | 'completed'
+
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
 
   // Function: add a new todo
   function addTodo(e) {
