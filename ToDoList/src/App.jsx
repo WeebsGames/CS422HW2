@@ -104,7 +104,16 @@ const visibleTodos =
 
       {/* Todo List */}
       <ul style={{ marginTop: 20, paddingLeft: 0 }}>
-        {visibleTodos.map((todo) => (
+        {visibleTodos.length === 0 && filter != "all" ? (
+          <li style={{ listStyle: "none", textAlign: "center", padding: "20px", color: "#666" }}>
+            No todos match that filter.
+          </li>
+        ) : visibleTodos.length === 0 ? (
+          <li style={{ listStyle: "none", textAlign: "center", padding: "20px", color: "#666" }}>
+            No todos yet! Add one above.
+          </li>
+        ) : (
+          visibleTodos.map((todo) => (
           <li
             key={todo.id}
             onClick={() => toggleTodo(todo.id)}
@@ -144,7 +153,7 @@ const visibleTodos =
             </button>
           </li>
 
-        ))}
+        )))}
       </ul>
 
     </div>
