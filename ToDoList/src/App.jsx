@@ -20,6 +20,11 @@ export default function App() {
 
   const [filter, setFilter] = useState("all"); // 'all' | 'active' | 'completed'
 
+  // State: selected todo IDs
+  const [selected, setSelected] = useState([]);
+
+  const isEditing = useState(false);
+
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos]);
@@ -50,7 +55,29 @@ export default function App() {
 
 function deleteTodo(id) {
   setTodos(todos.filter((todo) => todo.id !== id));
+  setSelected(selected.filter((sid) => sid !== id));
 }
+
+function toggleSelect(id) {
+  setSelected((prev) =>
+    prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+  );
+}
+
+function deleteSelected() {
+  setTodos(todos.filter((todo) => !selected.includes(todo.id)));
+  setSelected([]);
+}
+
+function handleDoubleClick(){
+  isEditing = true;
+}
+
+function handleBlur(){
+  isEditing = false;
+}
+
+
 
 const visibleTodos =
   filter === "active"
@@ -65,7 +92,7 @@ const visibleTodos =
   return (
     <div style={{ padding: 24, fontFamily: "system-ui" }}>
       <h1>Todo App</h1>
-
+      <h2>Percent Done</h2>
       {/* Input Form */}
       <form onSubmit={addTodo} style={{ display: "flex", gap: 8 }}>
         <input
@@ -95,10 +122,26 @@ const visibleTodos =
         </button>
       </form>
 
-      <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
+      <div style={{ marginTop: 14, display: "flex", gap: 8, alignItems: "center" }}>
         <FilterButton current={filter} value="all" onClick={setFilter} />
         <FilterButton current={filter} value="active" onClick={setFilter} />
         <FilterButton current={filter} value="completed" onClick={setFilter} />
+        {selected.length > 0 && (
+          <button
+            onClick={deleteSelected}
+            style={{
+              marginLeft: "auto",
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "none",
+              background: "#dc2626",
+              color: "white",
+              cursor: "pointer",
+            }}
+          >
+            Delete Selected ({selected.length})
+          </button>
+        )}
       </div>
 
 
@@ -117,6 +160,8 @@ const visibleTodos =
           <li
             key={todo.id}
             onClick={() => toggleTodo(todo.id)}
+            onDoubleClick={handleDoubleClick}
+            onBlur={handleBlur}
             style={{
               listStyle: "none",
               padding: "10px 12px",
@@ -131,7 +176,18 @@ const visibleTodos =
               opacity: todo.completed ? 0.6 : 1,
             }}
           >
-            <span>{todo.text}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                type="checkbox"
+                checked={selected.includes(todo.id)}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  toggleSelect(todo.id);
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span>{todo.text}</span>
+            </span>
 
             <button
               onClick={(e) => {
