@@ -23,7 +23,7 @@ export default function App() {
   // State: selected todo IDs
   const [selected, setSelected] = useState([]);
 
-  const isEditing = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
@@ -69,15 +69,27 @@ function deleteSelected() {
   setSelected([]);
 }
 
-function handleDoubleClick(){
-  isEditing = true;
+function handleDoubleClick(id) {
+  setEditingId(id);
 }
 
 function handleBlur(){
-  isEditing = false;
+  setEditingId(null);
 }
 
-
+function handleEditKeyDown(e, id){
+  if(e.key === "Enter"){
+    const newText = e.target.value.trim();
+    if(newText){
+      setTodos(todos.map(todo =>
+        todo.id === id ? {...todo, text: newText} : todo
+      ));
+    }
+    setEditingId(null);
+  } else if (e.key === "Escape"){
+    setEditingId(null);
+  }
+}
 
 const visibleTodos =
   filter === "active"
@@ -160,7 +172,10 @@ const visibleTodos =
           <li
             key={todo.id}
             onClick={() => toggleTodo(todo.id)}
-            onDoubleClick={handleDoubleClick}
+            onDoubleClick={(e) => {
+  e.stopPropagation();
+  handleDoubleClick(todo.id);
+}}
             onBlur={handleBlur}
             style={{
               listStyle: "none",
@@ -186,7 +201,17 @@ const visibleTodos =
                 }}
                 onClick={(e) => e.stopPropagation()}
               />
+              {editingId === todo.id ? (
+              <input
+                defaultValue={todo.text}
+                onKeyDown={(e) => handleEditKeyDown(e, todo.id)}
+                onBlur={handleBlur}
+                autoFocus
+                style={{ flex: 1, padding: 4 }}
+              />
+            ) : (
               <span>{todo.text}</span>
+            )}
             </span>
 
             <button
