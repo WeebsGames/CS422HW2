@@ -25,6 +25,9 @@ export default function App() {
 
   const [editingId, setEditingId] = useState(null);
 
+  // State: deleted todos for undo functionality
+  const [deletedTodos, setDeletedTodos] = useState([]);
+
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos]);
@@ -54,8 +57,19 @@ export default function App() {
 }
 
 function deleteTodo(id) {
+  const todoToDelete = todos.find(t => t.id === id);
+  if (todoToDelete) {
+    setDeletedTodos(prev => [...prev, { ...todoToDelete, deletedAt: Date.now() }]);
+  }
   setTodos(todos.filter((todo) => todo.id !== id));
   setSelected(selected.filter((sid) => sid !== id));
+}
+
+function undoDelete() {
+  if (deletedTodos.length === 0) return;
+  const lastDeleted = deletedTodos[deletedTodos.length - 1];
+  setTodos([lastDeleted, ...todos]);
+  setDeletedTodos(prev => prev.slice(0, -1));
 }
 
 function toggleSelect(id) {
@@ -65,6 +79,8 @@ function toggleSelect(id) {
 }
 
 function deleteSelected() {
+  const selectedTodos = todos.filter(t => selected.includes(t.id));
+  setDeletedTodos(prev => [...prev, ...selectedTodos.map(t => ({ ...t, deletedAt: Date.now() }))]);
   setTodos(todos.filter((todo) => !selected.includes(todo.id)));
   setSelected([]);
 }
@@ -98,12 +114,42 @@ const visibleTodos =
     ? todos.filter((t) => t.completed)
     : todos;
 
+const remainingCount = todos.filter(t => !t.completed).length;
+const completedCount = todos.filter(t => t.completed).length;
+const progress = todos.length > 0 ? Math.round((completedCount / todos.length) * 100) : 0;
+
 
 
 
   return (
     <div style={{ padding: 24, fontFamily: "system-ui" }}>
       <h1>Todo App</h1>
+      
+      {/* Stats and Progress */}
+      <div style={{ marginBottom: 16, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <span>{remainingCount} task{remainingCount !== 1 ? 's' : ''} left</span>
+        <span>{completedCount} completed</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span>Progress: {progress}%</span>
+          <div style={{ width: 100, height: 10, background: "#e5e5e5", borderRadius: 5, overflow: "hidden" }}>
+            <div style={{ width: `${progress}%`, height: "100%", background: "#22c55e", transition: "width 0.3s" }} />
+          </div>
+        </div>
+        {deletedTodos.length > 0 && (
+          <button
+            onClick={undoDelete}
+            style={{
+              padding: "6px 12px",
+              borderRadius: 6,
+              border: "1px solid #ccc",
+              cursor: "pointer",
+            }}
+          >
+            Undo Delete ({deletedTodos.length})
+          </button>
+        )}
+      </div>
+
       <h2>Percent Done</h2>
       {/* Input Form */}
       <form onSubmit={addTodo} style={{ display: "flex", gap: 8 }}>
